@@ -1,2 +1,2 @@
-# zonterras-amsterdam
-Terrassen in de zon Amsterdam
+# Zonterras Amsterdam
+Upload index.html naar GitHub en koppel aan Vercel.
