@@ -1,1 +1,175 @@
-<!doctype html><html><body><h1>Zonterras Amsterdam ☀️</h1><p>MVP app.</p></body></html>
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zonterras Amsterdam</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #fff8e7;
+      color: #222;
+    }
+
+    header {
+      padding: 18px;
+      background: #ffcc4d;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    p {
+      margin: 6px 0 0;
+    }
+
+    #map {
+      height: 65vh;
+      width: 100%;
+    }
+
+    .list {
+      padding: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .tag {
+      display: inline-block;
+      background: #ffe9a8;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-right: 5px;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>☀️ Zonterras Amsterdam</h1>
+    <p>Vind snel een terras met zon voor jou en je vrienden.</p>
+  </header>
+
+  <div id="map"></div>
+
+  <section class="list" id="terraceList"></section>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const terraces = [
+      {
+        name: "Hannekes Boom",
+        area: "Centrum",
+        sun: "middagzon / avondzon",
+        vibe: "aan het water, levendig",
+        lat: 52.3762,
+        lng: 4.9144
+      },
+      {
+        name: "Waterkant",
+        area: "West",
+        sun: "middagzon",
+        vibe: "aan het water, druk, gezellig",
+        lat: 52.3652,
+        lng: 4.8751
+      },
+      {
+        name: "Noorderlicht",
+        area: "Noord",
+        sun: "avondzon",
+        vibe: "creatief, ruim, aan het IJ",
+        lat: 52.3995,
+        lng: 4.8927
+      },
+      {
+        name: "Louie Louie",
+        area: "Oost",
+        sun: "middagzon",
+        vibe: "urban, gezellig",
+        lat: 52.3613,
+        lng: 4.9264
+      },
+      {
+        name: "Bar Botanique",
+        area: "Oost",
+        sun: "ochtendzon / middagzon",
+        vibe: "groen, stijlvol",
+        lat: 52.3638,
+        lng: 4.9295
+      },
+      {
+        name: "Café Zurich",
+        area: "West",
+        sun: "middagzon / avondzon",
+        vibe: "klassiek, plein",
+        lat: 52.3780,
+        lng: 4.8494
+      },
+      {
+        name: "De Ysbreeker",
+        area: "Oost",
+        sun: "middagzon",
+        vibe: "klassiek, Amstel",
+        lat: 52.3588,
+        lng: 4.9061
+      },
+      {
+        name: "Café Panache",
+        area: "West",
+        sun: "avondzon",
+        vibe: "restaurant, stedelijk",
+        lat: 52.3703,
+        lng: 4.8615
+      }
+    ];
+
+    const map = L.map("map").setView([52.3676, 4.9041], 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    const list = document.getElementById("terraceList");
+
+    terraces.forEach((terrace) => {
+      L.marker([terrace.lat, terrace.lng])
+        .addTo(map)
+        .bindPopup(`
+          <strong>${terrace.name}</strong><br>
+          ${terrace.area}<br>
+          ☀️ ${terrace.sun}<br>
+          ${terrace.vibe}
+        `);
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <strong>${terrace.name}</strong><br>
+        ${terrace.area}<br>
+        <span class="tag">☀️ ${terrace.sun}</span>
+        <span class="tag">${terrace.vibe}</span>
+      `;
+      list.appendChild(card);
+    });
+  </script>
+</body>
+</html>
