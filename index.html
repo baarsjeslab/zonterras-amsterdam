@@ -66,4 +66,249 @@
       border-radius: 14px;
       padding: 14px;
       margin-bottom: 12px;
-      box-shadow: 0 2px 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card strong {
+      font-size: 17px;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #ffe9a8;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-right: 5px;
+      margin-top: 7px;
+    }
+
+    a {
+      color: #222;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>☀️ Zonterras Amsterdam</h1>
+    <p>Terrassen met zon, kaart en filters voor jou en je vrienden.</p>
+    <div class="weather" id="weather">Weer laden...</div>
+  </header>
+
+  <div class="filters">
+    <button class="active" onclick="setFilter('all', this)">Alles</button>
+    <button onclick="setFilter('ochtend', this)">Ochtendzon</button>
+    <button onclick="setFilter('middag', this)">Middagzon</button>
+    <button onclick="setFilter('avond', this)">Avondzon</button>
+    <button onclick="setFilter('water', this)">Aan water</button>
+    <button onclick="setFilter('west', this)">West</button>
+    <button onclick="setFilter('oost', this)">Oost</button>
+  </div>
+
+  <div id="map"></div>
+  <section class="list" id="terraceList"></section>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const terraces = [
+      {
+        name: "Hannekes Boom",
+        area: "Centrum",
+        sun: "middagzon / avondzon",
+        vibe: "aan het water, levendig",
+        tags: ["middag", "avond", "water"],
+        lat: 52.3762,
+        lng: 4.9144
+      },
+      {
+        name: "Waterkant",
+        area: "West",
+        sun: "middagzon",
+        vibe: "aan het water, druk, gezellig",
+        tags: ["middag", "water", "west"],
+        lat: 52.3652,
+        lng: 4.8751
+      },
+      {
+        name: "Noorderlicht",
+        area: "Noord",
+        sun: "avondzon",
+        vibe: "creatief, ruim, aan het IJ",
+        tags: ["avond", "water"],
+        lat: 52.3995,
+        lng: 4.8927
+      },
+      {
+        name: "Louie Louie",
+        area: "Oost",
+        sun: "middagzon",
+        vibe: "urban, gezellig",
+        tags: ["middag", "oost"],
+        lat: 52.3613,
+        lng: 4.9264
+      },
+      {
+        name: "Bar Botanique",
+        area: "Oost",
+        sun: "ochtendzon / middagzon",
+        vibe: "groen, stijlvol",
+        tags: ["ochtend", "middag", "oost"],
+        lat: 52.3638,
+        lng: 4.9295
+      },
+      {
+        name: "Café Zurich",
+        area: "West",
+        sun: "middagzon / avondzon",
+        vibe: "klassiek, plein",
+        tags: ["middag", "avond", "west"],
+        lat: 52.3780,
+        lng: 4.8494
+      },
+      {
+        name: "De Ysbreeker",
+        area: "Oost",
+        sun: "middagzon",
+        vibe: "klassiek, Amstel",
+        tags: ["middag", "water", "oost"],
+        lat: 52.3588,
+        lng: 4.9061
+      },
+      {
+        name: "Café Panache",
+        area: "West",
+        sun: "avondzon",
+        vibe: "restaurant, stedelijk",
+        tags: ["avond", "west"],
+        lat: 52.3703,
+        lng: 4.8615
+      },
+      {
+        name: "Bam Boa",
+        area: "Oost / Weesperzijde",
+        sun: "middagzon / avondzon",
+        vibe: "aan de Amstel, zomers, cocktails",
+        tags: ["middag", "avond", "water", "oost"],
+        lat: 52.3570,
+        lng: 4.9072
+      },
+      {
+        name: "Hesp",
+        area: "Oost / Weesperzijde",
+        sun: "middagzon / avondzon",
+        vibe: "Amstelzicht, klassiek caféterras",
+        tags: ["middag", "avond", "water", "oost"],
+        lat: 52.3575,
+        lng: 4.9068
+      },
+      {
+        name: "Hendrix",
+        area: "Oud-West",
+        sun: "middagzon / avondzon",
+        vibe: "buurtbar, all-day hangout",
+        tags: ["middag", "avond", "west"],
+        lat: 52.3712,
+        lng: 4.8695
+      },
+      {
+        name: "De Neef van Fred",
+        area: "De Baarsjes",
+        sun: "middagzon / avondzon",
+        vibe: "buurtbistro, gezellig terras",
+        tags: ["middag", "avond", "west"],
+        lat: 52.3701,
+        lng: 4.8592
+      }
+    ];
+
+    const map = L.map("map").setView([52.3676, 4.8900], 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    const list = document.getElementById("terraceList");
+    let markers = [];
+
+    function mapsLink(terrace) {
+      return `https://www.google.com/maps/search/?api=1&query=${terrace.lat},${terrace.lng}`;
+    }
+
+    function renderTerraces(filter = "all") {
+      list.innerHTML = "";
+      markers.forEach(marker => map.removeLayer(marker));
+      markers = [];
+
+      const visibleTerraces = terraces.filter(terrace => {
+        if (filter === "all") return true;
+        return terrace.tags.includes(filter);
+      });
+
+      visibleTerraces.forEach((terrace) => {
+        const marker = L.marker([terrace.lat, terrace.lng])
+          .addTo(map)
+          .bindPopup(`
+            <strong>${terrace.name}</strong><br>
+            ${terrace.area}<br>
+            ☀️ ${terrace.sun}<br>
+            ${terrace.vibe}<br>
+            <a href="${mapsLink(terrace)}" target="_blank">Open in Google Maps</a>
+          `);
+
+        markers.push(marker);
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <strong>${terrace.name}</strong><br>
+          ${terrace.area}<br>
+          <span class="tag">☀️ ${terrace.sun}</span>
+          <span class="tag">${terrace.vibe}</span><br><br>
+          <a href="${mapsLink(terrace)}" target="_blank">Open in Google Maps</a>
+        `;
+        list.appendChild(card);
+      });
+
+      if (visibleTerraces.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.18));
+      }
+    }
+
+    function setFilter(filter, button) {
+      document.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+      button.classList.add("active");
+      renderTerraces(filter);
+    }
+
+    async function loadWeather() {
+      try {
+        const url = "https://api.open-meteo.com/v1/forecast?latitude=52.3676&longitude=4.9041&current=temperature_2m,cloud_cover,wind_speed_10m";
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const temp = Math.round(data.current.temperature_2m);
+        const clouds = data.current.cloud_cover;
+        const wind = Math.round(data.current.wind_speed_10m);
+
+        let sky = "☀️ zonnig";
+        if (clouds > 65) sky = "☁️ bewolkt";
+        else if (clouds > 30) sky = "⛅ deels bewolkt";
+
+        document.getElementById("weather").innerHTML =
+          `${temp}°C · ${sky} · wind ${wind} km/u`;
+      } catch (error) {
+        document.getElementById("weather").innerHTML =
+          "Weer kon niet geladen worden.";
+      }
+    }
+
+    renderTerraces();
+    loadWeather();
+  </script>
+</body>
+</html>
