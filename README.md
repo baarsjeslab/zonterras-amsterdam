@@ -1,4 +1,4 @@
-# Zonterras Amsterdam — adresversie
+# Zonterras Amsterdam
 
 Deze versie gebruikt:
 
@@ -18,12 +18,10 @@ Open `terraces.js` en voeg onderaan vóór `];` een blok toe:
   vibe: "rustig, lokaal",
   rating: 8,
   notes: "Jouw korte opmerking.",
-  tags: ["middag", "avond", "west", "baarsjes"],
+  tags: ["middag", "avond"],
   googleMapsUrl: "https://maps.app.goo.gl/..."
 }
 ```
-
-Let op de komma tussen blokken.
 
 ## Als adres niet goed werkt
 

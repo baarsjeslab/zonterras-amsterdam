@@ -2,7 +2,8 @@
 // Je hoeft meestal alleen address in te vullen.
 // Als een plek verkeerd op de kaart komt, voeg dan handmatig lat en lng toe.
 // rating = jouw reviewcijfer 1 t/m 10.
-// tags voor filters: ochtend, middag, avond, water, west, oost, baarsjes.
+// tags voor filters: ochtend, middag, avond, water.
+// Je mag extra tags zoals west/oost/baarsjes laten staan voor eigen ordening, maar ze hebben nu geen filterknop.
 
 const terraces = [
   {
@@ -15,6 +16,26 @@ const terraces = [
     notes: "Goede buurtplek.",
     tags: ["middag", "avond", "west"],
     googleMapsUrl: "https://maps.app.goo.gl/gxfqaeksWK1oQrDT6"
+  },
+  {
+    name: "Café Thuys",
+    area: "Oud-West",
+    address: "De Clercqstraat 129, 1053 AK Amsterdam",
+    sun: "middagzon / avondzon",
+    vibe: "buurtcafé, relaxed",
+    rating: 8,
+    notes: "Fijne plek op De Clercqstraat.",
+    tags: ["middag", "avond", "west"]
+  },
+  {
+    name: "Karavaan",
+    area: "Oud-West",
+    address: "Kwakersplein 2, 1053 TZ Amsterdam",
+    sun: "middagzon / avondzon",
+    vibe: "groot terras, levendig plein",
+    rating: 8,
+    notes: "Goede optie met groep.",
+    tags: ["middag", "avond", "west"]
   },
   {
     name: "De Neef van Fred",
