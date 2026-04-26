@@ -8,16 +8,27 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
+    :root {
+      --sun: #ffcc4d;
+      --sun-soft: #fff2bd;
+      --bg: #fff8e7;
+      --text: #222;
+      --card: #fff;
+      --muted: #666;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #fff8e7;
-      color: #222;
+      background: var(--bg);
+      color: var(--text);
     }
 
     header {
       padding: 18px;
-      background: #ffcc4d;
+      background: var(--sun);
     }
 
     h1 {
@@ -25,17 +36,23 @@
       font-size: 26px;
     }
 
+    p { margin: 6px 0 0; }
+
     .weather {
       margin-top: 8px;
       font-size: 14px;
+      font-weight: bold;
     }
 
     .filters {
       padding: 12px;
-      background: #fff2bd;
+      background: var(--sun-soft);
       display: flex;
       gap: 8px;
       overflow-x: auto;
+      position: sticky;
+      top: 0;
+      z-index: 500;
     }
 
     button {
@@ -45,10 +62,12 @@
       background: white;
       cursor: pointer;
       font-weight: bold;
+      white-space: nowrap;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
 
     button.active {
-      background: #222;
+      background: var(--text);
       color: white;
     }
 
@@ -57,20 +76,33 @@
       width: 100%;
     }
 
-    .list {
-      padding: 16px;
-    }
+    .list { padding: 16px; }
 
     .card {
-      background: white;
+      background: var(--card);
       border-radius: 14px;
       padding: 14px;
       margin-bottom: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
-    .card strong {
-      font-size: 17px;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .card strong { font-size: 17px; }
+
+    .rating {
+      background: #222;
+      color: white;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
     }
 
     .tag {
@@ -83,17 +115,38 @@
       margin-top: 7px;
     }
 
+    .meta {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
     a {
       color: #222;
       font-weight: bold;
     }
+
+    .warning {
+      background: #fff;
+      border-left: 4px solid #d35400;
+      padding: 12px;
+      margin: 16px;
+      border-radius: 10px;
+    }
+
+    .popup-title {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .popup-line { margin-top: 4px; }
   </style>
 </head>
 
 <body>
   <header>
     <h1>☀️ Zonterras Amsterdam</h1>
-    <p>Terrassen met zon, kaart en filters voor jou en je vrienden.</p>
+    <p>Terrassen met zon, reviews en kaart.</p>
     <div class="weather" id="weather">Weer laden...</div>
   </header>
 
@@ -105,125 +158,18 @@
     <button onclick="setFilter('water', this)">Aan water</button>
     <button onclick="setFilter('west', this)">West</button>
     <button onclick="setFilter('oost', this)">Oost</button>
+    <button onclick="setFilter('baarsjes', this)">Baarsjes</button>
+    <button onclick="setFilter('top', this)">Review 8+</button>
   </div>
 
   <div id="map"></div>
+  <div id="warnings"></div>
   <section class="list" id="terraceList"></section>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./terraces.js"></script>
 
   <script>
-    const terraces = [
-      {
-        name: "Hannekes Boom",
-        area: "Centrum",
-        sun: "middagzon / avondzon",
-        vibe: "aan het water, levendig",
-        tags: ["middag", "avond", "water"],
-        lat: 52.3762,
-        lng: 4.9144
-      },
-      {
-        name: "Waterkant",
-        area: "West",
-        sun: "middagzon",
-        vibe: "aan het water, druk, gezellig",
-        tags: ["middag", "water", "west"],
-        lat: 52.3652,
-        lng: 4.8751
-      },
-      {
-        name: "Noorderlicht",
-        area: "Noord",
-        sun: "avondzon",
-        vibe: "creatief, ruim, aan het IJ",
-        tags: ["avond", "water"],
-        lat: 52.3995,
-        lng: 4.8927
-      },
-      {
-        name: "Louie Louie",
-        area: "Oost",
-        sun: "middagzon",
-        vibe: "urban, gezellig",
-        tags: ["middag", "oost"],
-        lat: 52.3613,
-        lng: 4.9264
-      },
-      {
-        name: "Bar Botanique",
-        area: "Oost",
-        sun: "ochtendzon / middagzon",
-        vibe: "groen, stijlvol",
-        tags: ["ochtend", "middag", "oost"],
-        lat: 52.3638,
-        lng: 4.9295
-      },
-      {
-        name: "Café Zurich",
-        area: "West",
-        sun: "middagzon / avondzon",
-        vibe: "klassiek, plein",
-        tags: ["middag", "avond", "west"],
-        lat: 52.3780,
-        lng: 4.8494
-      },
-      {
-        name: "De Ysbreeker",
-        area: "Oost",
-        sun: "middagzon",
-        vibe: "klassiek, Amstel",
-        tags: ["middag", "water", "oost"],
-        lat: 52.3588,
-        lng: 4.9061
-      },
-      {
-        name: "Café Panache",
-        area: "West",
-        sun: "avondzon",
-        vibe: "restaurant, stedelijk",
-        tags: ["avond", "west"],
-        lat: 52.3703,
-        lng: 4.8615
-      },
-      {
-        name: "Bam Boa",
-        area: "Oost / Weesperzijde",
-        sun: "middagzon / avondzon",
-        vibe: "aan de Amstel, zomers, cocktails",
-        tags: ["middag", "avond", "water", "oost"],
-        lat: 52.3570,
-        lng: 4.9072
-      },
-      {
-        name: "Hesp",
-        area: "Oost / Weesperzijde",
-        sun: "middagzon / avondzon",
-        vibe: "Amstelzicht, klassiek caféterras",
-        tags: ["middag", "avond", "water", "oost"],
-        lat: 52.3575,
-        lng: 4.9068
-      },
-      {
-        name: "Hendrix",
-        area: "Oud-West",
-        sun: "middagzon / avondzon",
-        vibe: "buurtbar, all-day hangout",
-        tags: ["middag", "avond", "west"],
-        lat: 52.37077999074845,
-        lng: 4.868690498926795
-      },
-      {
-        name: "De Neef van Fred",
-        area: "De Baarsjes",
-        sun: "middagzon / avondzon",
-        vibe: "buurtbistro, gezellig terras",
-        tags: ["middag", "avond", "west"],
-        lat: 52.3701,
-        lng: 4.8592
-      }
-    ];
-
     const map = L.map("map").setView([52.3676, 4.8900], 12);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -232,10 +178,107 @@
     }).addTo(map);
 
     const list = document.getElementById("terraceList");
+    const warnings = document.getElementById("warnings");
     let markers = [];
+    let enrichedTerraces = [];
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
 
     function mapsLink(terrace) {
-      return `https://www.google.com/maps/search/?api=1&query=${terrace.lat},${terrace.lng}`;
+      if (terrace.googleMapsUrl) return terrace.googleMapsUrl;
+      if (terrace.address) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(terrace.address)}`;
+      if (terrace.lat && terrace.lng) return `https://www.google.com/maps/search/?api=1&query=${terrace.lat},${terrace.lng}`;
+      return "#";
+    }
+
+    function matchesFilter(terrace, filter) {
+      if (filter === "all") return true;
+      if (filter === "top") return Number(terrace.rating || 0) >= 8;
+      return (terrace.tags || []).includes(filter);
+    }
+
+    function cacheKeyForAddress(address) {
+      return `geocode:${address.toLowerCase().trim()}`;
+    }
+
+    async function geocodeAddress(address) {
+      const cacheKey = cacheKeyForAddress(address);
+      const cached = localStorage.getItem(cacheKey);
+
+      if (cached) return JSON.parse(cached);
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=nl&q=${encodeURIComponent(address)}`;
+      const response = await fetch(url, {
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+
+      if (!response.ok) throw new Error("Geocoding mislukt");
+
+      const results = await response.json();
+
+      if (!results || results.length === 0) return null;
+
+      const location = {
+        lat: Number(results[0].lat),
+        lng: Number(results[0].lon)
+      };
+
+      localStorage.setItem(cacheKey, JSON.stringify(location));
+      return location;
+    }
+
+    async function enrichTerracesWithLocations() {
+      const enriched = [];
+      const missing = [];
+
+      for (const terrace of terraces) {
+        let location = null;
+
+        if (typeof terrace.lat === "number" && typeof terrace.lng === "number") {
+          location = { lat: terrace.lat, lng: terrace.lng };
+        } else if (terrace.address) {
+          try {
+            location = await geocodeAddress(terrace.address);
+          } catch (error) {
+            location = null;
+          }
+        }
+
+        if (!location) {
+          missing.push(terrace.name);
+        }
+
+        enriched.push({
+          ...terrace,
+          location
+        });
+
+        // Rustig aan doen met gratis geocoding.
+        await new Promise(resolve => setTimeout(resolve, 250));
+      }
+
+      if (missing.length > 0) {
+        warnings.innerHTML = `
+          <div class="warning">
+            <strong>Locatie niet gevonden:</strong><br>
+            ${missing.map(escapeHtml).join(", ")}<br><br>
+            Voeg voor deze plek handmatig <code>lat</code> en <code>lng</code> toe in <code>terraces.js</code>.
+          </div>
+        `;
+      } else {
+        warnings.innerHTML = "";
+      }
+
+      return enriched;
     }
 
     function renderTerraces(filter = "all") {
@@ -243,20 +286,37 @@
       markers.forEach(marker => map.removeLayer(marker));
       markers = [];
 
-      const visibleTerraces = terraces.filter(terrace => {
-        if (filter === "all") return true;
-        return terrace.tags.includes(filter);
-      });
+      const visibleTerraces = enrichedTerraces.filter(terrace =>
+        terrace.location && matchesFilter(terrace, filter)
+      );
 
       visibleTerraces.forEach((terrace) => {
-        const marker = L.marker([terrace.lat, terrace.lng])
+        const loc = terrace.location;
+
+        const safeName = escapeHtml(terrace.name);
+        const safeArea = escapeHtml(terrace.area);
+        const safeAddress = escapeHtml(terrace.address || "");
+        const safeSun = escapeHtml(terrace.sun);
+        const safeVibe = escapeHtml(terrace.vibe);
+        const safeNotes = escapeHtml(terrace.notes || "");
+        const safeRating = escapeHtml(terrace.rating ?? "-");
+        const url = mapsLink(terrace);
+
+        const marker = L.circleMarker([loc.lat, loc.lng], {
+          radius: 8,
+          weight: 2,
+          fillOpacity: 1
+        })
           .addTo(map)
           .bindPopup(`
-            <strong>${terrace.name}</strong><br>
-            ${terrace.area}<br>
-            ☀️ ${terrace.sun}<br>
-            ${terrace.vibe}<br>
-            <a href="${mapsLink(terrace)}" target="_blank">Open in Google Maps</a>
+            <div class="popup-title">${safeName}</div>
+            <div class="popup-line">${safeArea}</div>
+            ${safeAddress ? `<div class="popup-line">${safeAddress}</div>` : ""}
+            <div class="popup-line">☀️ ${safeSun}</div>
+            <div class="popup-line">⭐ Review: ${safeRating}/10</div>
+            <div class="popup-line">${safeVibe}</div>
+            ${safeNotes ? `<div class="popup-line"><em>${safeNotes}</em></div>` : ""}
+            <div class="popup-line"><a href="${url}" target="_blank" rel="noopener">Open in Google Maps</a></div>
           `);
 
         markers.push(marker);
@@ -264,16 +324,25 @@
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
-          <strong>${terrace.name}</strong><br>
-          ${terrace.area}<br>
-          <span class="tag">☀️ ${terrace.sun}</span>
-          <span class="tag">${terrace.vibe}</span><br><br>
-          <a href="${mapsLink(terrace)}" target="_blank">Open in Google Maps</a>
+          <div class="card-header">
+            <div>
+              <strong>${safeName}</strong><br>
+              ${safeArea}
+            </div>
+            <div class="rating">⭐ ${safeRating}</div>
+          </div>
+          ${safeAddress ? `<div class="meta">${safeAddress}</div>` : ""}
+          <span class="tag">☀️ ${safeSun}</span>
+          <span class="tag">${safeVibe}</span>
+          ${safeNotes ? `<div class="meta">${safeNotes}</div>` : ""}
+          <div class="meta">
+            <a href="${url}" target="_blank" rel="noopener">Open in Google Maps</a>
+          </div>
         `;
         list.appendChild(card);
       });
 
-      if (visibleTerraces.length > 0) {
+      if (markers.length > 0) {
         const group = L.featureGroup(markers);
         map.fitBounds(group.getBounds().pad(0.18));
       }
@@ -307,8 +376,14 @@
       }
     }
 
-    renderTerraces();
-    loadWeather();
+    async function init() {
+      document.getElementById("weather").innerHTML = "Locaties en weer laden...";
+      enrichedTerraces = await enrichTerracesWithLocations();
+      renderTerraces();
+      loadWeather();
+    }
+
+    init();
   </script>
 </body>
 </html>
